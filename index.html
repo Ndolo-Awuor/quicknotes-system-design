@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickNotes | API Client</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="api.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">PROJECT 2 · SYSTEM DESIGN</p>
+      <h1>QuickNotes</h1>
+      <p>A small place for your ideas. Now connected to an API.</p>
+    </header>
+    <main>
+      <aside class="demo-notice" aria-label="Practice API information">
+        <strong>This is a practice workspace.</strong>
+        JSONPlaceholder simulates changes; it does not save created notes or
+        deletions. Loading again or refreshing resets the displayed notes.
+        Loaded cards use fictional English examples for easier reading.
+      </aside>
+      <section aria-labelledby="add-heading">
+        <h2 id="add-heading">Add a note</h2>
+        <p class="section-intro">Give your idea a title. Add more detail if you like.</p>
+        <form id="note-form" novalidate>
+          <label for="title-input">Title <span class="required">(required)</span></label>
+          <input id="title-input" name="title" type="text" required
+            aria-describedby="title-help title-count" />
+          <div class="field-help">
+            <p id="title-help">Maximum 100 characters.</p>
+            <p id="title-count">0 / 100 characters</p>
+          </div>
+          <label for="body-input">Note <span class="required">(optional)</span></label>
+          <textarea id="body-input" name="body" rows="4"></textarea>
+          <button id="submit-btn" type="submit" disabled>Create note</button>
+        </form>
+      </section>
+      <section aria-labelledby="notes-heading">
+        <div class="section-heading">
+          <div>
+            <h2 id="notes-heading">Your notes</h2>
+            <p id="note-count" class="section-intro">No notes loaded yet.</p>
+          </div>
+          <button id="load-btn" class="secondary" type="button">Load notes</button>
+        </div>
+        <label class="original-toggle" for="show-original">
+          <input id="show-original" type="checkbox" />
+          Show original API placeholder text
+        </label>
+        <p id="status" class="status info" role="status" aria-live="polite"
+          aria-atomic="true">Ready. Select Load notes to get started.</p>
+        <ul id="notes-list"></ul>
+      </section>
+    </main>
+    <footer>
+      <p>QuickNotes · Learn by building.</p>
+      <p>Practice client powered by JSONPlaceholder.</p>
+    </footer>
+  </body>
+</html>
