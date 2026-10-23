@@ -118,7 +118,14 @@ function renderNotes(emptyMessage = "No notes yet. Create a note to get started.
     meta.className = "note-meta";
     const label = document.createElement("small");
     label.textContent = `Server ID ${note.id}${note.simulated ? " · practice note" : example ? " · English demo example" : ""}`;
-    meta.appendChild(label);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "delete-btn";
+    remove.textContent = "Delete";
+    remove.setAttribute("aria-label", `Delete note: ${displayedTitle}`);
+    remove.disabled = busy;
+    remove.addEventListener("click", () => deleteNote(note.key));
+    meta.append(label, remove);
     card.append(title, body, meta);
     list.appendChild(card);
   });
@@ -182,6 +189,35 @@ async function createNote(event) {
     submitButton.textContent = "Create note";
     setBusy(false);
     titleInput.focus();
+  }
+}
+
+async function deleteNote(key) {
+  if (busy) return;
+  const note = notes.find((item) => item.key === key);
+  if (!note) return;
+  setBusy(true);
+  setStatus("Deleting note...", "loading");
+  try {
+    const { status } = await request(`${API_URL}/${note.id}`, { method: "DELETE" });
+    notes = notes.filter((item) => item.key !== key);
+    renderNotes();
+    setStatus(`Note deleted (status ${status}, id ${note.id}).`, "success");
+  } catch (error) {
+    // The practice API never persists a POST, so its returned id may not exist
+    // for DELETE. Only a 404 for a note created in this session is treated as
+    // already absent; network errors, 500s and failures for loaded notes remain
+    // errors, and those notes stay visible. Reloading restores server fixtures.
+    if (note.simulated && error.status === 404) {
+      notes = notes.filter((item) => item.key !== key);
+      renderNotes();
+      setStatus("Practice note removed locally; the server did not persist it (status 404).", "success");
+    } else {
+      setStatus(friendlyError("delete the note", error), "error");
+    }
+  } finally {
+    setBusy(false);
+    loadButton.focus();
   }
 }
 
