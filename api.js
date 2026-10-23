@@ -38,8 +38,7 @@ function setStatus(message, kind = "info") {
 function setBusy(value) {
   busy = value;
   loadButton.disabled = value;
-  // Creating notes is added in the next task.
-  submitButton.disabled = true;
+  submitButton.disabled = value;
   titleInput.disabled = value;
   bodyInput.disabled = value;
   originalTextToggle.disabled = value;
@@ -80,6 +79,13 @@ function friendlyError(action, error) {
 function isNote(value) {
   return value && Number.isInteger(value.id) && value.id > 0 &&
     typeof value.title === "string" && typeof value.body === "string";
+}
+
+function updateTitleCount() {
+  const length = Array.from(titleInput.value).length;
+  titleCount.textContent = `${length} / 100 characters`;
+  titleCount.classList.toggle("warning", length > 90);
+  titleCount.classList.toggle("over", length > 100);
 }
 
 function renderNotes(emptyMessage = "No notes yet. Create a note to get started.") {
@@ -142,8 +148,50 @@ async function loadNotes() {
   }
 }
 
+async function createNote(event) {
+  event.preventDefault();
+  if (busy) return;
+  const title = titleInput.value.trim();
+  if (title === "" || Array.from(title).length > 100) {
+    titleInput.setAttribute("aria-invalid", "true");
+    setStatus(title === "" ? "Please enter a title." : "Titles must be 100 characters or fewer.", "error");
+    titleInput.focus();
+    return;
+  }
+  titleInput.removeAttribute("aria-invalid");
+  setBusy(true);
+  setStatus("Creating note...", "loading");
+  submitButton.textContent = "Creating...";
+  try {
+    const { data, status } = await request(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=UTF-8" },
+      body: JSON.stringify({ title, body: bodyInput.value.trim(), userId: 1 }),
+    });
+    if (!isNote(data)) throw new Error("Unexpected response format.");
+    // JSONPlaceholder may return id 101 for every POST. A separate local key
+    // keeps each displayed note distinct, while retaining the returned API id.
+    notes.unshift({ ...data, key: `note-${nextKey++}`, simulated: true });
+    renderNotes();
+    setStatus(`Note created (status ${status}, id ${data.id}).`, "success");
+    form.reset();
+    updateTitleCount();
+  } catch (error) {
+    setStatus(friendlyError("create the note", error), "error");
+  } finally {
+    submitButton.textContent = "Create note";
+    setBusy(false);
+    titleInput.focus();
+  }
+}
+
 loadButton.addEventListener("click", loadNotes);
 originalTextToggle.addEventListener("change", () => {
   if (notes.length > 0) renderNotes();
 });
-form.addEventListener("submit", (event) => event.preventDefault());
+form.addEventListener("submit", createNote);
+titleInput.addEventListener("input", () => {
+  titleInput.removeAttribute("aria-invalid");
+  updateTitleCount();
+});
+updateTitleCount();
